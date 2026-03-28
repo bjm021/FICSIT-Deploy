@@ -13,10 +13,6 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
   echo "ERROR: .env not found. Copy .env.example and fill in your values." >&2
   exit 1
 fi
-if [ ! -f "$SCRIPT_DIR/secure.yaml" ]; then
-  echo "ERROR: secure.yaml not found. Add your OpenStack application credentials." >&2
-  exit 1
-fi
 if [ ! -f "$SCRIPT_DIR/terraform.tfvars" ]; then
   echo "ERROR: terraform.tfvars not found. Copy terraform.tfvars.example and fill in your values." >&2
   exit 1
@@ -42,7 +38,7 @@ unlock_address = "${STATE_BASE}/lock"
 lock_method    = "POST"
 unlock_method  = "DELETE"
 retry_wait_min = 5
-username       = "terraform"
+username       = "oauth2"
 password       = "${GITLAB_PROJECT_ACCESS_TOKEN}"
 EOF
 

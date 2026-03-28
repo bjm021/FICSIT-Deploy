@@ -12,10 +12,8 @@ terraform {
 }
 
 provider "openstack" {
-  # Reads auth from clouds.yaml (public config) merged with secure.yaml (credentials).
-  # Place both files in the same directory as this config, or in
-  # ~/.config/openstack/. The cloud name "openstack" matches the key in both files.
-  cloud = "openstack"
+  # All credentials are read from OS_* environment variables (set by sourcing env.sh).
+  # No clouds.yaml or secure.yaml needed.
 }
 
 # ---------------------------------------------------------------------------
