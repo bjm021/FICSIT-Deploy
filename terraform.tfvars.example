@@ -1,0 +1,11 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# Do NOT commit terraform.tfvars to version control.
+
+instance_name         = "satisfactory-server"
+image_name            = "Ubuntu 22.04 LTS"        # adjust to your cloud's image name
+flavor_name           = "c4.xlarge"               # 4 vCPU / 16 GB — rename as needed
+key_pair_name         = "my-keypair"
+internal_network_name = "my-internal-network"
+external_network_name = "public"
+ssh_allowed_cidr      = "0.0.0.0/0"              # restrict to your IP, e.g. "203.0.113.5/32"
+steam_anonymous       = true
