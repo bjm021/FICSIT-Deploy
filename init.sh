@@ -64,15 +64,16 @@ def sign(key, msg):
 def signing_key(secret, date_stamp, region, service):
     return sign(sign(sign(sign(('AWS4' + secret).encode('utf-8'), date_stamp), region), service), 'aws4_request')
 
-account_id = os.environ['R2_ACCOUNT_ID']
-access_key = os.environ['R2_ACCESS_KEY_ID']
-secret_key = os.environ['R2_SECRET_ACCESS_KEY']
-bucket     = os.environ['R2_BUCKET_NAME']
-region     = 'auto'
-service    = 's3'
-host       = f'{account_id}.r2.cloudflarestorage.com'
+account_id   = os.environ['R2_ACCOUNT_ID']
+access_key   = os.environ['R2_ACCESS_KEY_ID']
+secret_key   = os.environ['R2_SECRET_ACCESS_KEY']
+bucket       = os.environ['R2_BUCKET_NAME']
+jurisdiction = os.environ.get('R2_JURISDICTION', '').strip().lower()
+region       = 'auto'
+service      = 's3'
+host         = f'{account_id}.{jurisdiction + "." if jurisdiction else ""}r2.cloudflarestorage.com'
 
-now        = datetime.datetime.utcnow()
+now        = datetime.datetime.now(datetime.timezone.utc)
 amz_date   = now.strftime('%Y%m%dT%H%M%SZ')
 date_stamp = now.strftime('%Y%m%d')
 
@@ -183,4 +184,4 @@ echo ""
 echo "=== Installation log (Ctrl+C to stop following) ==="
 # Follow the log until the bootstrap complete marker appears, then exit
 ssh $SSH_OPTS "ubuntu@${FLOATING_IP}" \
-  "tail -n +1 -f /var/log/satisfactory-setup.log | { sed '/Bootstrap complete/q'; }"
+  "tail -n +1 -f --retry /var/log/satisfactory-setup.log | { sed '/Bootstrap complete/q'; }"

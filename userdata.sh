@@ -8,6 +8,7 @@ echo "=== Satisfactory Dedicated Server bootstrap ==="
 # System setup
 # ---------------------------------------------------------------------------
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
 apt-get update -y
 apt-get upgrade -y
 apt-get install -y \
@@ -217,7 +218,7 @@ type = s3
 provider = Cloudflare
 access_key_id = $R2_ACCESS_KEY_ID
 secret_access_key = $R2_SECRET_ACCESS_KEY
-endpoint = https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com
+endpoint = https://$R2_ACCOUNT_ID.$${R2_JURISDICTION:+$R2_JURISDICTION.}r2.cloudflarestorage.com
 CONF
 chmod 600 "$RCLONE_CONF"
 
