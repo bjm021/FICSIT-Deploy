@@ -142,15 +142,24 @@ resource "openstack_networking_floatingip_v2" "satisfactory" {
 # Instance
 # ---------------------------------------------------------------------------
 
+resource "openstack_networking_port_v2" "satisfactory" {
+  name               = "${var.instance_name}-port"
+  network_id         = openstack_networking_network_v2.satisfactory.id
+  security_group_ids = [openstack_networking_secgroup_v2.satisfactory.id]
+
+  fixed_ip {
+    subnet_id = openstack_networking_subnet_v2.satisfactory.id
+  }
+}
+
 resource "openstack_compute_instance_v2" "satisfactory" {
-  name            = var.instance_name
-  image_name      = var.image_name
-  flavor_name     = var.flavor_name
-  key_pair        = var.key_pair_name
-  security_groups = [openstack_networking_secgroup_v2.satisfactory.name]
+  name        = var.instance_name
+  image_id    = var.image_id
+  flavor_name = var.flavor_name
+  key_pair    = var.key_pair_name
 
   network {
-    uuid = openstack_networking_network_v2.satisfactory.id
+    port = openstack_networking_port_v2.satisfactory.id
   }
 
   depends_on = [openstack_networking_router_interface_v2.satisfactory]
@@ -164,7 +173,9 @@ resource "openstack_compute_instance_v2" "satisfactory" {
   }
 }
 
-resource "openstack_compute_floatingip_associate_v2" "satisfactory" {
+resource "openstack_networking_floatingip_associate_v2" "satisfactory" {
   floating_ip = openstack_networking_floatingip_v2.satisfactory.address
-  instance_id = openstack_compute_instance_v2.satisfactory.id
+  port_id     = openstack_networking_port_v2.satisfactory.id
+
+  depends_on = [openstack_networking_router_interface_v2.satisfactory]
 }

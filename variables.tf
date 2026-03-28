@@ -4,10 +4,9 @@ variable "instance_name" {
   default     = "satisfactory-server"
 }
 
-variable "image_name" {
-  description = "OS image name. Ubuntu 22.04 LTS recommended."
+variable "image_id" {
+  description = "OS image UUID."
   type        = string
-  default     = "Ubuntu 22.04 LTS"
 }
 
 variable "flavor_name" {

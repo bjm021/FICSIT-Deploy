@@ -2,7 +2,7 @@
 # Do NOT commit terraform.tfvars to version control.
 
 instance_name         = "satisfactory-server"
-image_name            = "Ubuntu 22.04 LTS"        # adjust to your cloud's image name
+image_id              = "1dbf558b-5b83-4ae4-9039-73670564b17f"
 flavor_name           = "c4.xlarge"               # 4 vCPU / 16 GB — rename as needed
 key_pair_name         = "my-keypair"
 subnet_cidr           = "10.10.10.0/24"      # private subnet Terraform will create
