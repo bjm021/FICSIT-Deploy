@@ -53,3 +53,39 @@ variable "steam_username" {
   type        = string
   default     = ""
 }
+
+variable "sf_server_name" {
+  description = "Display name shown in the Satisfactory server browser"
+  type        = string
+  default     = "Satisfactory Server"
+}
+
+variable "sf_admin_password" {
+  description = "Admin password for the Satisfactory server API"
+  type        = string
+  sensitive   = true
+}
+
+variable "r2_account_id" {
+  description = "Cloudflare account ID (from R2 dashboard)"
+  type        = string
+  sensitive   = true
+}
+
+variable "r2_access_key_id" {
+  description = "Cloudflare R2 API token access key ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "r2_secret_access_key" {
+  description = "Cloudflare R2 API token secret access key"
+  type        = string
+  sensitive   = true
+}
+
+variable "r2_bucket_name" {
+  description = "Cloudflare R2 bucket name for save backups"
+  type        = string
+  default     = "satisfactory-backups"
+}

@@ -9,3 +9,5 @@ subnet_cidr           = "10.10.10.0/24"      # private subnet Terraform will cre
 external_network_name = "public"              # name of your cloud's external/floating-IP pool
 ssh_allowed_cidr      = "0.0.0.0/0"              # restrict to your IP, e.g. "203.0.113.5/32"
 steam_anonymous       = true
+sf_server_name        = "Satisfactory Server"
+# Sensitive vars (sf_admin_password, r2_*) are set via .env → TF_VAR_* — do not put them here

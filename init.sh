@@ -22,6 +22,103 @@ fi
 . "$SCRIPT_DIR/env.sh"
 
 # ---------------------------------------------------------------------------
+# Validate credentials before doing anything expensive
+# ---------------------------------------------------------------------------
+echo ""
+echo "=== Validating credentials ==="
+
+ERRORS=0
+check_var() {
+  local name="$1" val="${2:-}"
+  if [ -z "$val" ]; then
+    echo "  [FAIL] $name is not set in .env"
+    ERRORS=$((ERRORS + 1))
+  else
+    echo "  [OK]   $name"
+  fi
+}
+
+check_var "SF_ADMIN_PASSWORD"    "${SF_ADMIN_PASSWORD:-}"
+check_var "R2_ACCOUNT_ID"        "${R2_ACCOUNT_ID:-}"
+check_var "R2_ACCESS_KEY_ID"     "${R2_ACCESS_KEY_ID:-}"
+check_var "R2_SECRET_ACCESS_KEY" "${R2_SECRET_ACCESS_KEY:-}"
+check_var "R2_BUCKET_NAME"       "${R2_BUCKET_NAME:-}"
+
+if [ "$ERRORS" -gt 0 ]; then
+  echo ""
+  echo "Fix the above errors in .env before continuing." >&2
+  exit 1
+fi
+
+# Validate R2 bucket access using AWS Sig V4 (Python stdlib — no extra tools needed)
+if ! command -v python3 &>/dev/null; then
+  echo "  [SKIP] python3 not found — skipping R2 connectivity check"
+else
+  python3 << 'PYEOF'
+import datetime, hashlib, hmac, sys, os
+import urllib.request, urllib.error
+
+def sign(key, msg):
+    return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+
+def signing_key(secret, date_stamp, region, service):
+    return sign(sign(sign(sign(('AWS4' + secret).encode('utf-8'), date_stamp), region), service), 'aws4_request')
+
+account_id = os.environ['R2_ACCOUNT_ID']
+access_key = os.environ['R2_ACCESS_KEY_ID']
+secret_key = os.environ['R2_SECRET_ACCESS_KEY']
+bucket     = os.environ['R2_BUCKET_NAME']
+region     = 'auto'
+service    = 's3'
+host       = f'{account_id}.r2.cloudflarestorage.com'
+
+now        = datetime.datetime.utcnow()
+amz_date   = now.strftime('%Y%m%dT%H%M%SZ')
+date_stamp = now.strftime('%Y%m%d')
+
+# ListObjectsV2 with max-keys=0 — authenticated but returns no data
+method         = 'GET'
+canonical_uri  = f'/{bucket}'
+canonical_qs   = 'list-type=2&max-keys=0'
+payload_hash   = hashlib.sha256(b'').hexdigest()
+canonical_hdrs = f'host:{host}\nx-amz-content-sha256:{payload_hash}\nx-amz-date:{amz_date}\n'
+signed_hdrs    = 'host;x-amz-content-sha256;x-amz-date'
+canonical_req  = f'{method}\n{canonical_uri}\n{canonical_qs}\n{canonical_hdrs}\n{signed_hdrs}\n{payload_hash}'
+
+cred_scope     = f'{date_stamp}/{region}/{service}/aws4_request'
+string_to_sign = f'AWS4-HMAC-SHA256\n{amz_date}\n{cred_scope}\n{hashlib.sha256(canonical_req.encode()).hexdigest()}'
+sig            = hmac.new(signing_key(secret_key, date_stamp, region, service), string_to_sign.encode(), hashlib.sha256).hexdigest()
+auth           = f'AWS4-HMAC-SHA256 Credential={access_key}/{cred_scope}, SignedHeaders={signed_hdrs}, Signature={sig}'
+
+url = f'https://{host}/{bucket}?{canonical_qs}'
+req = urllib.request.Request(url, headers={
+    'Authorization':        auth,
+    'x-amz-date':           amz_date,
+    'x-amz-content-sha256': payload_hash,
+})
+
+try:
+    urllib.request.urlopen(req)
+    print(f'  [OK]   R2 bucket "{bucket}" is accessible')
+except urllib.error.HTTPError as e:
+    body = e.read().decode(errors='replace')
+    if e.code == 404:
+        print(f'  [FAIL] R2 bucket "{bucket}" does not exist — create it in the Cloudflare dashboard', file=sys.stderr)
+    elif e.code in (401, 403):
+        print(f'  [FAIL] R2 credentials rejected (HTTP {e.code}) — check R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY', file=sys.stderr)
+    else:
+        print(f'  [FAIL] Unexpected R2 response HTTP {e.code}: {body[:300]}', file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print(f'  [FAIL] Could not reach R2 endpoint: {e}', file=sys.stderr)
+    sys.exit(1)
+PYEOF
+fi
+
+echo "  [NOTE] SF_ADMIN_PASSWORD cannot be validated until the server is running"
+echo "=== Validation passed ==="
+
+# ---------------------------------------------------------------------------
 # Generate backend.hcl from .env values (never committed — in .gitignore)
 # ---------------------------------------------------------------------------
 # Extract the project path from the URL (e.g. "stbemeyer/factorygameserver")

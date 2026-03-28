@@ -165,7 +165,13 @@ resource "openstack_compute_instance_v2" "satisfactory" {
   depends_on = [openstack_networking_router_interface_v2.satisfactory]
 
   user_data = templatefile("${path.module}/userdata.sh", {
-    steam_user = var.steam_anonymous ? "anonymous" : var.steam_username
+    steam_user           = var.steam_anonymous ? "anonymous" : var.steam_username
+    sf_server_name       = var.sf_server_name
+    sf_admin_password    = var.sf_admin_password
+    r2_account_id        = var.r2_account_id
+    r2_access_key_id     = var.r2_access_key_id
+    r2_secret_access_key = var.r2_secret_access_key
+    r2_bucket_name       = var.r2_bucket_name
   })
 
   metadata = {
