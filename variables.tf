@@ -25,9 +25,10 @@ variable "key_pair_name" {
   type        = string
 }
 
-variable "internal_network_name" {
-  description = "Name of the internal/tenant network to attach the instance to"
+variable "subnet_cidr" {
+  description = "CIDR for the private subnet Terraform creates for the server"
   type        = string
+  default     = "10.10.10.0/24"
 }
 
 variable "external_network_name" {

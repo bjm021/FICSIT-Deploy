@@ -19,6 +19,39 @@ provider "openstack" {
 }
 
 # ---------------------------------------------------------------------------
+# Network, Subnet & Router
+# ---------------------------------------------------------------------------
+
+resource "openstack_networking_network_v2" "satisfactory" {
+  name           = "${var.instance_name}-net"
+  admin_state_up = true
+}
+
+resource "openstack_networking_subnet_v2" "satisfactory" {
+  name            = "${var.instance_name}-subnet"
+  network_id      = openstack_networking_network_v2.satisfactory.id
+  cidr            = var.subnet_cidr
+  ip_version      = 4
+  dns_nameservers = ["8.8.8.8", "8.8.4.4"]
+}
+
+resource "openstack_networking_router_v2" "satisfactory" {
+  name                = "${var.instance_name}-router"
+  admin_state_up      = true
+  external_network_id = data.openstack_networking_network_v2.external.id
+}
+
+resource "openstack_networking_router_interface_v2" "satisfactory" {
+  router_id = openstack_networking_router_v2.satisfactory.id
+  subnet_id = openstack_networking_subnet_v2.satisfactory.id
+}
+
+# Look up the external network by name so we only need the name in one place
+data "openstack_networking_network_v2" "external" {
+  name = var.external_network_name
+}
+
+# ---------------------------------------------------------------------------
 # Security Group
 # ---------------------------------------------------------------------------
 
@@ -104,7 +137,7 @@ resource "openstack_networking_secgroup_rule_v2" "ssh" {
 # ---------------------------------------------------------------------------
 
 resource "openstack_networking_floatingip_v2" "satisfactory" {
-  pool = var.external_network_name
+  pool = data.openstack_networking_network_v2.external.name
 }
 
 # ---------------------------------------------------------------------------
@@ -119,8 +152,10 @@ resource "openstack_compute_instance_v2" "satisfactory" {
   security_groups = [openstack_networking_secgroup_v2.satisfactory.name]
 
   network {
-    name = var.internal_network_name
+    uuid = openstack_networking_network_v2.satisfactory.id
   }
+
+  depends_on = [openstack_networking_router_interface_v2.satisfactory]
 
   user_data = templatefile("${path.module}/userdata.sh", {
     steam_user = var.steam_anonymous ? "anonymous" : var.steam_username
