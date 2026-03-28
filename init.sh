@@ -70,3 +70,23 @@ rm -f tfplan
 echo ""
 echo "=== Done ==="
 terraform output
+
+# ---------------------------------------------------------------------------
+# Stream installation logs from the new instance
+# ---------------------------------------------------------------------------
+FLOATING_IP="$(terraform output -raw floating_ip)"
+
+echo ""
+echo "=== Waiting for SSH on ${FLOATING_IP} ==="
+SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes"
+until ssh $SSH_OPTS "ubuntu@${FLOATING_IP}" true 2>/dev/null; do
+  printf "."
+  sleep 5
+done
+echo " ready."
+
+echo ""
+echo "=== Installation log (Ctrl+C to stop following) ==="
+# Follow the log until the bootstrap complete marker appears, then exit
+ssh $SSH_OPTS "ubuntu@${FLOATING_IP}" \
+  "tail -n +1 -f /var/log/satisfactory-setup.log | { sed '/Bootstrap complete/q'; }"
