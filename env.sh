@@ -15,8 +15,7 @@ set -a
 . "$SCRIPT_DIR/.env"
 set +a
 
-# GitLab HTTP state backend credentials
-export TF_HTTP_USERNAME="oauth2"
+# GitLab HTTP state backend credentials (Project Access Token via header)
 export TF_HTTP_PASSWORD="$GITLAB_PROJECT_ACCESS_TOKEN"
 
 echo "Environment loaded: OpenStack=${OS_AUTH_URL}, state backend=${GITLAB_PROJECT_URL}"

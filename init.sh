@@ -38,8 +38,7 @@ unlock_address = "${STATE_BASE}/lock"
 lock_method    = "POST"
 unlock_method  = "DELETE"
 retry_wait_min = 5
-username       = "oauth2"
-password       = "${GITLAB_PROJECT_ACCESS_TOKEN}"
+headers        = { "PRIVATE-TOKEN" = "${GITLAB_PROJECT_ACCESS_TOKEN}" }
 EOF
 
 # ---------------------------------------------------------------------------
