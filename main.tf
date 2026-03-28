@@ -6,16 +6,9 @@ terraform {
     }
   }
 
-  backend "http" {
-    address        = "https://code.fbi.h-da.de/api/v4/projects/stbemeyer%2Ffactorygameserver/terraform/state/factorygameserver"
-    lock_address   = "https://code.fbi.h-da.de/api/v4/projects/stbemeyer%2Ffactorygameserver/terraform/state/factorygameserver/lock"
-    unlock_address = "https://code.fbi.h-da.de/api/v4/projects/stbemeyer%2Ffactorygameserver/terraform/state/factorygameserver/lock"
-    lock_method    = "POST"
-    unlock_method  = "DELETE"
-    retry_wait_min = 5
-    # Credentials are injected via TF_HTTP_USERNAME / TF_HTTP_PASSWORD env vars
-    # (set by sourcing env.sh — never hardcoded here)
-  }
+  # Backend config is supplied at init time via -backend-config=backend.hcl
+  # (generated from .env by init.sh — nothing hardcoded here)
+  backend "http" {}
 }
 
 provider "openstack" {

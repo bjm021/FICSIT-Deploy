@@ -24,11 +24,32 @@ fi
 . "$SCRIPT_DIR/env.sh"
 
 # ---------------------------------------------------------------------------
+# Generate backend.hcl from .env values (never committed — in .gitignore)
+# ---------------------------------------------------------------------------
+# Extract the project path from the URL (e.g. "stbemeyer/factorygameserver")
+# and URL-encode the slash for the GitLab API.
+PROJECT_PATH="${GITLAB_PROJECT_URL#https://*/}"
+PROJECT_PATH_ENCODED="${PROJECT_PATH/\//\%2F}"
+GITLAB_HOST="${GITLAB_PROJECT_URL%%/${PROJECT_PATH}}"
+STATE_BASE="${GITLAB_HOST}/api/v4/projects/${PROJECT_PATH_ENCODED}/terraform/state/${TF_STATE_NAME}"
+
+cat > "$SCRIPT_DIR/backend.hcl" <<EOF
+address        = "${STATE_BASE}"
+lock_address   = "${STATE_BASE}/lock"
+unlock_address = "${STATE_BASE}/lock"
+lock_method    = "POST"
+unlock_method  = "DELETE"
+retry_wait_min = 5
+username       = "terraform"
+password       = "${GITLAB_PROJECT_ACCESS_TOKEN}"
+EOF
+
+# ---------------------------------------------------------------------------
 # Terraform init → plan → apply
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== terraform init ==="
-terraform init -reconfigure
+terraform init -reconfigure -backend-config=backend.hcl
 
 echo ""
 echo "=== terraform plan ==="
