@@ -108,13 +108,13 @@ The first time you connect via the game client you will be prompted to log in wi
 World saves are backed up automatically every hour to `r2://<bucket>/<timestamp>/`. Only the 3 most recent backups are kept. You can check backup logs on the server with:
 
 ```sh
-journalctl -u satisfactory-backup
+sudo journalctl -u satisfactory-backup
 ```
 
 To trigger a manual backup:
 
 ```sh
-systemctl start satisfactory-backup
+sudo systemctl start satisfactory-backup
 ```
 
 ## Systemd services
