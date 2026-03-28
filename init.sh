@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
+TF=tofu
+
 # ---------------------------------------------------------------------------
 # Load credentials and environment
 # ---------------------------------------------------------------------------
@@ -48,12 +50,12 @@ EOF
 # Terraform init → plan → apply
 # ---------------------------------------------------------------------------
 echo ""
-echo "=== terraform init ==="
-terraform init -reconfigure -backend-config=backend.hcl
+echo "=== $TF init ==="
+$TF init -reconfigure -backend-config=backend.hcl
 
 echo ""
-echo "=== terraform plan ==="
-terraform plan -out=tfplan
+echo "=== $TF plan ==="
+$TF plan -out=tfplan
 
 echo ""
 read -rp "Apply the plan? [y/N] " confirm
@@ -63,18 +65,18 @@ if [ "${confirm,,}" != "y" ]; then
 fi
 
 echo ""
-echo "=== terraform apply ==="
-terraform apply tfplan
+echo "=== $TF apply ==="
+$TF apply tfplan
 rm -f tfplan
 
 echo ""
 echo "=== Done ==="
-terraform output
+$TF output
 
 # ---------------------------------------------------------------------------
 # Stream installation logs from the new instance
 # ---------------------------------------------------------------------------
-FLOATING_IP="$(terraform output -raw floating_ip)"
+FLOATING_IP="$($TF output -raw floating_ip)"
 
 echo ""
 echo "=== Waiting for SSH on ${FLOATING_IP} ==="
