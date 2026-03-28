@@ -106,6 +106,7 @@ R2_ACCOUNT_ID="${r2_account_id}"
 R2_ACCESS_KEY_ID="${r2_access_key_id}"
 R2_SECRET_ACCESS_KEY="${r2_secret_access_key}"
 R2_BUCKET_NAME="${r2_bucket_name}"
+R2_JURISDICTION="${r2_jurisdiction}"
 EOF
 chmod 600 /etc/satisfactory/config
 
@@ -219,6 +220,7 @@ provider = Cloudflare
 access_key_id = $R2_ACCESS_KEY_ID
 secret_access_key = $R2_SECRET_ACCESS_KEY
 endpoint = https://$R2_ACCOUNT_ID.$${R2_JURISDICTION:+$R2_JURISDICTION.}r2.cloudflarestorage.com
+no_check_bucket = true
 CONF
 chmod 600 "$RCLONE_CONF"
 

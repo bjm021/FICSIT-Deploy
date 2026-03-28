@@ -23,5 +23,6 @@ export TF_VAR_sf_admin_password="$SF_ADMIN_PASSWORD"
 export TF_VAR_r2_account_id="$R2_ACCOUNT_ID"
 export TF_VAR_r2_access_key_id="$R2_ACCESS_KEY_ID"
 export TF_VAR_r2_secret_access_key="$R2_SECRET_ACCESS_KEY"
+export TF_VAR_r2_jurisdiction="${R2_JURISDICTION:-}"
 
 echo "Environment loaded: OpenStack=${OS_AUTH_URL}, state backend=${GITLAB_PROJECT_URL}"

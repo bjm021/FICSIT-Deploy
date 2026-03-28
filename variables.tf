@@ -89,3 +89,9 @@ variable "r2_bucket_name" {
   type        = string
   default     = "satisfactory-backups"
 }
+
+variable "r2_jurisdiction" {
+  description = "Cloudflare R2 bucket jurisdiction. Leave empty for standard, set to 'eu' for EU-jurisdiction buckets."
+  type        = string
+  default     = ""
+}

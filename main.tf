@@ -172,6 +172,7 @@ resource "openstack_compute_instance_v2" "satisfactory" {
     r2_access_key_id     = var.r2_access_key_id
     r2_secret_access_key = var.r2_secret_access_key
     r2_bucket_name       = var.r2_bucket_name
+    r2_jurisdiction      = var.r2_jurisdiction
   })
 
   metadata = {
