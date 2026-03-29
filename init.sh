@@ -189,7 +189,7 @@ FLOATING_IP="$($TF output -raw floating_ip)"
 
 echo ""
 echo "=== Waiting for SSH on ${FLOATING_IP} ==="
-SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes"
+SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10"
 until ssh $SSH_OPTS "ubuntu@${FLOATING_IP}" true 2>/dev/null; do
   printf "."
   sleep 5
@@ -200,4 +200,4 @@ echo ""
 echo "=== Installation log (Ctrl+C to stop following) ==="
 # Follow the log until the bootstrap complete marker appears, then exit
 ssh $SSH_OPTS "ubuntu@${FLOATING_IP}" \
-  "tail -n +1 -f --retry /var/log/satisfactory-setup.log | { sed '/Bootstrap complete/q'; }"
+  "tail -n +1 -f --retry /var/log/satisfactory-setup.log | awk '/Bootstrap complete/{print; fflush(); exit} {print; fflush()}'"
