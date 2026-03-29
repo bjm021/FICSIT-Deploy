@@ -15,8 +15,10 @@ set -a
 . "$SCRIPT_DIR/.env"
 set +a
 
-# GitLab HTTP state backend credentials (Project Access Token via header)
-export TF_HTTP_PASSWORD="$GITLAB_PROJECT_ACCESS_TOKEN"
+# GitLab HTTP state backend credentials (only used when STATE_BACKEND=gitlab)
+if [ "${STATE_BACKEND:-gitlab}" = "gitlab" ]; then
+  export TF_HTTP_PASSWORD="$GITLAB_PROJECT_ACCESS_TOKEN"
+fi
 
 # Pass sensitive vars to OpenTofu without putting them in terraform.tfvars
 export TF_VAR_sf_admin_password="$SF_ADMIN_PASSWORD"
@@ -25,4 +27,8 @@ export TF_VAR_r2_access_key_id="$R2_ACCESS_KEY_ID"
 export TF_VAR_r2_secret_access_key="$R2_SECRET_ACCESS_KEY"
 export TF_VAR_r2_jurisdiction="${R2_JURISDICTION:-}"
 
-echo "Environment loaded: OpenStack=${OS_AUTH_URL}, state backend=${GITLAB_PROJECT_URL}"
+BACKEND_INFO="${STATE_BACKEND:-gitlab}"
+if [ "$BACKEND_INFO" = "gitlab" ]; then
+  BACKEND_INFO="gitlab (${GITLAB_PROJECT_URL})"
+fi
+echo "Environment loaded: OpenStack=${OS_AUTH_URL}, state backend=${BACKEND_INFO}"

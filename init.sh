@@ -44,6 +44,14 @@ check_var "R2_ACCESS_KEY_ID"     "${R2_ACCESS_KEY_ID:-}"
 check_var "R2_SECRET_ACCESS_KEY" "${R2_SECRET_ACCESS_KEY:-}"
 check_var "R2_BUCKET_NAME"       "${R2_BUCKET_NAME:-}"
 
+if [ "${STATE_BACKEND:-gitlab}" = "gitlab" ]; then
+  check_var "GITLAB_PROJECT_URL"          "${GITLAB_PROJECT_URL:-}"
+  check_var "GITLAB_PROJECT_ACCESS_TOKEN" "${GITLAB_PROJECT_ACCESS_TOKEN:-}"
+  check_var "TF_STATE_NAME"               "${TF_STATE_NAME:-}"
+else
+  echo "  [OK]   STATE_BACKEND=local (GitLab credentials not required)"
+fi
+
 if [ "$ERRORS" -gt 0 ]; then
   echo ""
   echo "Fix the above errors in .env before continuing." >&2
@@ -120,16 +128,18 @@ echo "  [NOTE] SF_ADMIN_PASSWORD cannot be validated until the server is running
 echo "=== Validation passed ==="
 
 # ---------------------------------------------------------------------------
-# Generate backend.hcl from .env values (never committed — in .gitignore)
+# Configure backend
 # ---------------------------------------------------------------------------
-# Extract the project path from the URL (e.g. "stbemeyer/factorygameserver")
-# and URL-encode the slash for the GitLab API.
-PROJECT_PATH="${GITLAB_PROJECT_URL#https://*/}"
-PROJECT_PATH_ENCODED="${PROJECT_PATH/\//\%2F}"
-GITLAB_HOST="${GITLAB_PROJECT_URL%%/${PROJECT_PATH}}"
-STATE_BASE="${GITLAB_HOST}/api/v4/projects/${PROJECT_PATH_ENCODED}/terraform/state/${TF_STATE_NAME}"
+BACKEND_ARGS=""
+if [ "${STATE_BACKEND:-gitlab}" = "gitlab" ]; then
+  # Generate backend.hcl from .env values (never committed — in .gitignore)
+  # Extract the project path (e.g. "user/repo") and URL-encode the slash.
+  PROJECT_PATH="${GITLAB_PROJECT_URL#https://*/}"
+  PROJECT_PATH_ENCODED="${PROJECT_PATH/\//\%2F}"
+  GITLAB_HOST="${GITLAB_PROJECT_URL%%/${PROJECT_PATH}}"
+  STATE_BASE="${GITLAB_HOST}/api/v4/projects/${PROJECT_PATH_ENCODED}/terraform/state/${TF_STATE_NAME}"
 
-cat > "$SCRIPT_DIR/backend.hcl" <<EOF
+  cat > "$SCRIPT_DIR/backend.hcl" <<EOF
 address        = "${STATE_BASE}"
 lock_address   = "${STATE_BASE}/lock"
 unlock_address = "${STATE_BASE}/lock"
@@ -138,13 +148,19 @@ unlock_method  = "DELETE"
 retry_wait_min = 5
 headers        = { "PRIVATE-TOKEN" = "${GITLAB_PROJECT_ACCESS_TOKEN}" }
 EOF
+  BACKEND_ARGS="-backend-config=backend.hcl"
+  echo "Using GitLab remote state backend"
+else
+  echo "Using local state backend (terraform.tfstate)"
+fi
 
 # ---------------------------------------------------------------------------
 # Terraform init → plan → apply
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== $TF init ==="
-$TF init -reconfigure -backend-config=backend.hcl
+# shellcheck disable=SC2086
+$TF init -reconfigure $BACKEND_ARGS
 
 echo ""
 echo "=== $TF plan ==="

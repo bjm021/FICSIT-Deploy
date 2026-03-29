@@ -22,14 +22,16 @@ fi
 . "$SCRIPT_DIR/env.sh"
 
 # ---------------------------------------------------------------------------
-# Generate backend.hcl
+# Configure backend
 # ---------------------------------------------------------------------------
-PROJECT_PATH="${GITLAB_PROJECT_URL#https://*/}"
-PROJECT_PATH_ENCODED="${PROJECT_PATH/\//\%2F}"
-GITLAB_HOST="${GITLAB_PROJECT_URL%%/${PROJECT_PATH}}"
-STATE_BASE="${GITLAB_HOST}/api/v4/projects/${PROJECT_PATH_ENCODED}/terraform/state/${TF_STATE_NAME}"
+BACKEND_ARGS=""
+if [ "${STATE_BACKEND:-gitlab}" = "gitlab" ]; then
+  PROJECT_PATH="${GITLAB_PROJECT_URL#https://*/}"
+  PROJECT_PATH_ENCODED="${PROJECT_PATH/\//\%2F}"
+  GITLAB_HOST="${GITLAB_PROJECT_URL%%/${PROJECT_PATH}}"
+  STATE_BASE="${GITLAB_HOST}/api/v4/projects/${PROJECT_PATH_ENCODED}/terraform/state/${TF_STATE_NAME}"
 
-cat > "$SCRIPT_DIR/backend.hcl" <<EOF
+  cat > "$SCRIPT_DIR/backend.hcl" <<EOF
 address        = "${STATE_BASE}"
 lock_address   = "${STATE_BASE}/lock"
 unlock_address = "${STATE_BASE}/lock"
@@ -38,13 +40,19 @@ unlock_method  = "DELETE"
 retry_wait_min = 5
 headers        = { "PRIVATE-TOKEN" = "${GITLAB_PROJECT_ACCESS_TOKEN}" }
 EOF
+  BACKEND_ARGS="-backend-config=backend.hcl"
+  echo "Using GitLab remote state backend"
+else
+  echo "Using local state backend (terraform.tfstate)"
+fi
 
 # ---------------------------------------------------------------------------
 # Init and destroy
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== $TF init ==="
-$TF init -reconfigure -backend-config=backend.hcl
+# shellcheck disable=SC2086
+$TF init -reconfigure $BACKEND_ARGS
 
 echo ""
 echo "=== $TF plan -destroy ==="
