@@ -198,6 +198,7 @@ echo " ready."
 
 echo ""
 echo "=== Installation log (Ctrl+C to stop following) ==="
-# Follow the log until the bootstrap complete marker appears, then exit
-ssh $SSH_OPTS "ubuntu@${FLOATING_IP}" \
-  "tail -n +1 -f --retry /var/log/satisfactory-setup.log | awk '/Bootstrap complete/{print; fflush(); exit} {print; fflush()}'"
+# -t allocates a pseudo-TTY so the remote shell uses line-buffered output;
+# \r is stripped to avoid stray ^M characters from the PTY line discipline.
+ssh -t $SSH_OPTS "ubuntu@${FLOATING_IP}" \
+  "tail -n +1 -f --retry /var/log/satisfactory-setup.log | awk '{gsub(/\r/,\"\")} /Bootstrap complete/{print; fflush(); exit} {print; fflush()}'"

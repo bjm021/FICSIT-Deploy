@@ -45,11 +45,22 @@ INSTALL_DIR="/home/steam/satisfactory"
 mkdir -p "$INSTALL_DIR"
 chown -R steam:steam "$INSTALL_DIR"
 
-sudo -u steam /home/steam/steamcmd/steamcmd.sh \
-  +force_install_dir "$INSTALL_DIR" \
-  +login ${steam_user} \
-  +app_update 1690800 validate \
-  +quit
+# SteamCMD occasionally returns "Missing configuration" (transient CDN error); retry up to 5 times.
+STEAMCMD_EXIT=1
+for attempt in 1 2 3 4 5; do
+  echo "SteamCMD attempt $attempt/5..."
+  sudo -u steam /home/steam/steamcmd/steamcmd.sh \
+    +force_install_dir "$INSTALL_DIR" \
+    +login ${steam_user} \
+    +app_update 1690800 validate \
+    +quit && STEAMCMD_EXIT=0 && break
+  echo "SteamCMD failed (attempt $attempt), retrying in 10s..."
+  sleep 10
+done
+if [ $STEAMCMD_EXIT -ne 0 ]; then
+  echo "ERROR: SteamCMD failed after 5 attempts"
+  exit 1
+fi
 
 # ---------------------------------------------------------------------------
 # systemd service
